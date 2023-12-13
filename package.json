@@ -7,8 +7,8 @@
     "start": "node dist/index.js",
     "build": "tsc"
   },
-  "author": "Kirils Scerba",
-  "license": "MIT",
+  "author": "Liplan Lekipising",
+  "license": "",
   "devDependencies": {
     "@types/cron": "^2.0.0",
     "@types/node": "^16.9.1",
