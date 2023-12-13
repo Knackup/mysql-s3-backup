@@ -3,7 +3,7 @@ import { PutObjectCommand, S3Client, S3ClientConfig } from "@aws-sdk/client-s3";
 import { createReadStream, unlink } from "fs";
 import { env } from "./env";
 
-const uploadToS3 = async (file: {name: string, path: string}): Promise<void> => {
+const uploadToS3 = async (file: { name: string, path: string }): Promise<void> => {
   const bucket = env.AWS_S3_BUCKET;
   const clientOptions: S3ClientConfig = {
     region: env.AWS_S3_REGION,
@@ -18,6 +18,22 @@ const uploadToS3 = async (file: {name: string, path: string}): Promise<void> => 
   }
 
   const client = new S3Client(clientOptions);
+
+  const listedObjects = await client.send(new ListObjectsV2Command({ Bucket: bucket }));
+
+  if (listedObjects.Contents.length > 0) {
+    const deleteParams = {
+      Bucket: bucket,
+      Delete: {
+        Objects: listedObjects.Contents.map(item => ({ Key: item.Key })),
+        Quiet: false,
+      },
+    };
+    await client.send(new DeleteObjectsCommand(deleteParams));
+    console.log(`Deleted ${listedObjects.Contents.length} old backups`)
+  }
+
+
 
   await client.send(
     new PutObjectCommand({
@@ -72,7 +88,7 @@ export const backup = async (): Promise<void> => {
   const filepath = `/tmp/${filename}`;
 
   await dumpToFile(filepath);
-  await uploadToS3({name: filename, path: filepath});
+  await uploadToS3({ name: filename, path: filepath });
   await deleteFile(filepath);
 
   console.log("Database backup complete!")
